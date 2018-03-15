@@ -211,7 +211,56 @@
  - pip install -i http://pypi.douban.com/simple/ --trusted-host pypi.douban.com -r requirements.txt
  - 配置反向代理 
     - nohup python manage.py runserver --host 0.0.0.0 --port 9008 & 
+    ```
+    upstream movie {
+       server 192.168.4.9:9008;
+    }
+    limit_conn_zone $binary_remote_addr zone=addr:10m;
+    server
+    {
+        listen      80;
+        server_name	localhost;
+        index index.html index.php index.phtml;
+        root /usr/share/nginx/html;
     
+        # 反向代理
+        location / {
+        proxy_pass_header Server;
+        proxy_set_header Host $http_host; 
+        proxy_redirect off; 
+        proxy_set_header X-Real-IP $remote_addr; 
+        proxy_set_header X-Scheme $scheme;
+        proxy_http_version 1.1; 
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_pass http://movie; 
+        }
+        
+        # 限制访问
+        location ~ \.(flv|mp4|avi|mov)$
+        {
+        limit_conn addr 1;
+        limit_rate 200k;
+        rewrite ^/static/uploads/(.+?).(flv|mp4|mov|avi)$ /uploads/$1.$2 permanent;
+        }
+       
+        #图片防止盗链
+        #location ~* \.(gif|jpg|png|bmp)
+        #{
+          #valid_referers none blocked 192.168.4.9 *.bluepay.asia server_name ~\.goole\. ~\.baidu\.;
+          #if ($invalid_referer){
+        #return 403;
+            #rewrite ^/ http://www.baidu.com/403.jpg;
+          #}			
+        #}
+        # 错误日志
+        access_log /var/log/nginx/access_80.log;
+        error_log /var/log/nginx/error_80.log;
+    
+    
+    }
+
+    ```
 - 流媒体访问限制
     - 限制单个IP能发起的连接数：limit_conn addr 1; # 并发打开播放数
     - 限制视频速率：limit_rate 1024k  # 清晰度，下载数据
