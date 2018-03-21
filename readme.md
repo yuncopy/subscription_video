@@ -265,7 +265,6 @@
     - 限制单个IP能发起的连接数：limit_conn addr 1; # 并发打开播放数
     - 限制视频速率：limit_rate 1024k  # 清晰度，下载数据
     - 刷新nginx nginx -s reload  
-- 资源 https://github.com/mtianyan/movie_project
 - 反向代理 https://www.imooc.com/article/19538
 
 
